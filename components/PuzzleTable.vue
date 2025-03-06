@@ -7,14 +7,17 @@ const props = defineProps<{
 }>()
 
 let tiles: any
+let drag = false
+const float = ref()
+const floatNum = ref('0')
 
-let drag = false;
+const minDistance = 2
+const tileTolerance = 5
+const floatOffset = 40
+let floatScale = 1
 
-document.addEventListener('mousedown', () => drag = false);
-document.addEventListener('mousemove', () => drag = true);
-document.addEventListener('mouseup', () => console.log(drag ? 'drag' : 'click'));
-
-//TODO use the code above and implement drag logic. i made a div #float. have fun! you are the goat bruh
+let tileMouseMove = false
+let dragCancelled = false
 
 function mouseOver(row: number, col: number) {
   const rowTiles = document.querySelectorAll(`[data-row="${row}"]:not(.clicked)`)
@@ -33,10 +36,100 @@ function mouseOver(row: number, col: number) {
   }
 }
 
-function mouseLeave() {
+function cancelDrag() {
+  dragCancelled = true
+
   for (const tile of tiles) {
     tile.classList.remove('hover')
   }
+
+  if (drag) {
+    floatNum.value = "X"
+    floatScale = 1.3
+  }
+}
+
+function uncancelDrag() {
+  dragCancelled = false
+  floatScale = 1
+}
+
+let mouseStartPos: [number, number]
+let startTile: [string, string]
+
+enum Direction {
+  side = 0,
+  up
+}
+
+function mouseDown(ev: MouseEvent) {
+  drag = true
+  ev.preventDefault()
+  mouseStartPos = [ev.clientX, ev.clientY]
+
+  const target = ev.target as HTMLElement;
+  startTile = [target.dataset.col!, target.dataset.row!]
+
+  console.log('startTile:', startTile)
+}
+
+function mouseMove(ev: MouseEvent) {
+  tileMouseMove = true
+
+  if (drag) {
+    uncancelDrag()
+    const xDiff = ev.clientX - mouseStartPos[0]
+    const yDiff = ev.clientY - mouseStartPos[1]
+    const distance = Math.sqrt((xDiff ** 2) + (yDiff ** 2))
+    const direction = getDirection(xDiff, yDiff)
+    const target = ev.target as HTMLElement;
+
+    if (distance >= minDistance) {
+      handleDirection(target, direction)
+    }
+  }
+
+  setTimeout(() => (tileMouseMove = false), 1)
+
+}
+
+function handleDirection(target: HTMLElement, direction: Direction) {
+  const data = (direction == Direction.side) ? target.dataset.col! : target.dataset.row!
+  const tile = Number.parseInt(data)
+  const start = Number.parseInt(startTile[direction])
+
+  //min and max so the for loop can go in order
+  const min = Math.min(tile, start)
+  let max = Math.max(tile, start)
+
+  // console.log(min, max)
+  floatNum.value = String((max - min) + 1)
+
+  //removes all dragged elements for continuous generation
+  document.querySelectorAll(`.dragged`).forEach((el) => {
+    el.classList.remove('dragged')
+  })
+
+  let dragged: HTMLElement
+
+  for (let i = min; i <= max; i++) {
+    if (direction == Direction.side)
+      dragged = document.querySelector(`[data-col="${i}"][data-row="${startTile[1]}"]`)!
+    else
+      dragged = document.querySelector(`[data-col="${startTile[0]}"][data-row="${i}"]`)!
+
+    dragged?.classList.add('dragged')
+  }
+}
+
+function getDirection(x: number, y: number) {
+  x = Math.abs(x)
+  y = Math.abs(y)
+
+  if (x > y)
+    return Direction.side
+
+  return Direction.up
 }
 
 function click(event: Event) {
@@ -57,62 +150,113 @@ onMounted(async () => {
   // Wait for the next DOM update cycle
   await nextTick()
 
-  const tolerance = 5
   const height = props.file.columnLength + props.file.height
   const width = props.file.rowLength + props.file.width
 
   const windowHeight = window.innerHeight
   const windowWidth = window.innerWidth
 
-  if(windowWidth > windowHeight)
-    tileSize.value = `${windowHeight / (height + tolerance)}px`
+  if (windowWidth > windowHeight)
+    tileSize.value = `${windowHeight / (height + tileTolerance)}px`
   else
-    tileSize.value = `${windowWidth / (width + tolerance)}px`
-
+    tileSize.value = `${windowWidth / (width + tileTolerance)}px`
 
   tiles = document.querySelectorAll('[data-row], [data-col]')
 
-  console.log(tileSize)
+  //handles float hiding and removing dragged tiles
+  document.addEventListener('mouseup', (ev: MouseEvent) => {
+    drag = false
+
+    const dragged = document.querySelectorAll(`.dragged`)
+
+    if (!dragCancelled) {
+      dragged.forEach((tile) => {
+        tile.classList.add('clicked')
+      })
+    }
+
+    dragged.forEach((tile) => {
+      tile.classList.remove('dragged')
+    })
+
+    float.value.style.visibility = 'hidden'
+  })
+
+  document.addEventListener('mousemove', (ev: MouseEvent) => {
+    if (drag) {
+      float.value.style.visibility = 'visible'
+      float.value.style.transform = `scale(${floatScale})`
+
+      float.value.style.left = `${ev.clientX - floatOffset}px`
+      float.value.style.top = `${ev.clientY - floatOffset}px`
+
+      if (!tileMouseMove) {
+        cancelDrag()
+      }
+    }
+  })
 })
+
+function displayGoal() {
+  const goal = props.file.goal
+
+  for (let row = 0; row < goal.length; row++) {
+    for (let col = 0; col < goal[row].length; col++) {
+      const select = document.querySelector(`[data-col="${col}"][data-row="${row}"]`)
+
+      if(goal[row][col] == '1') {
+        select?.classList.add('clicked')
+      }
+      else {
+        select?.classList.add('cross')
+      }
+    }
+  }
+}
 
 </script>
 
 <template>
 
-  <div id="float"></div>
+  <div id="float" ref="float">
+    <p>{{ floatNum }}</p>
+  </div>
 
-  <table id="table" @mouseleave="mouseLeave">
-  <tr>
-    <!--      empty spaces for spacing-->
-    <th scope="col"></th>
-    <th class="columnHead" v-for="(col, index) in props.file.columns" scope="col" :data-col="index">
+  <table id="table" @mouseleave="cancelDrag">
+    <tr>
+      <!--      empty spaces for spacing-->
+      <th scope="col"></th>
+      <th class="columnHead" v-for="(col, index) in props.file.columns" scope="col" :data-col="index">
 
-      <div class="columnGrid">
-        <div v-for="num in col">
+        <div class="columnGrid">
+          <div v-for="num in col">
+            {{ num }}
+          </div>
+        </div>
+      </th>
+
+    </tr>
+
+    <tr class="row" v-for="(row, rowIndex) in props.file.rows">
+      <th class="rowHead" scope="row" :data-row="rowIndex">
+        <div> </div>
+
+        <div v-for="num in row">
           {{ num }}
         </div>
-      </div>
-    </th>
+      </th>
 
-  </tr>
 
-  <tr class="row" v-for="(row, rowIndex) in props.file.rows">
-    <th class="rowHead" scope="row" :data-row="rowIndex">
-      <div> </div>
-
-      <div v-for="num in row">
-        {{ num }}
-      </div>
-    </th>
-
-    <td class="tile"
-        v-for="(i, columnIndex) in props.file.columns"
-        :data-row="rowIndex"
-        :data-col="columnIndex"
-        @mouseover="mouseOver(rowIndex, columnIndex)"
-        @click="click"
-        @contextmenu="leftClick"></td>
-  </tr>
+      <td class="tile"
+          v-for="(i, columnIndex) in props.file.columns"
+          :data-row="rowIndex"
+          :data-col="columnIndex"
+          @mouseover="mouseOver(rowIndex, columnIndex)"
+          @mousedown="mouseDown($event)"
+          @mousemove="mouseMove($event)"
+          @click="click"
+          @contextmenu="leftClick"></td>
+    </tr>
 
   </table>
 </template>
@@ -146,13 +290,39 @@ th, td, tr {
   --tileHover: #4c534c;
   --tileHoverLight: #304330;
 
-  --tileSize: v-bind(tileSize);
+  --dragColor: yellow;
+
 
   line-height: v-bind(tileSize);
 }
 
 #float {
+  position: absolute;
+  visibility: hidden;
+  width: 35px;
+  height: 35px;
 
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  transition: transform 0.2s ease-in-out;
+  transform: scale(0.7);
+
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.64);
+
+  background-color: #650040;
+  border-radius: 5px;
+  z-index: 99;
+}
+
+#float > * {
+  color: wheat;
+  font-weight: 800;
+  font-family: "Kode Mono", monospace;
+  text-align: center;
+
+  margin: auto;
 }
 
 th {
@@ -196,6 +366,7 @@ th {
 
 .rowHead, .columnHead {
   background-color: var(--headBG);
+  user-select: none;
 }
 
 .row {
@@ -237,12 +408,17 @@ th {
   margin-left: var(--space);
 }
 
-.tile:not(.clicked):hover {
+.tile:not(.clicked, .dragged):hover {
   background-color: var(--tileHover);
 }
 
 .hover {
   background-color: var(--tileHoverLight);
+}
+
+.dragged {
+  //background-color: var(--dragColor);
+  background-color: yellow;
 }
 
 .clicked {
