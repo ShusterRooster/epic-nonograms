@@ -11,7 +11,7 @@ let drag = false
 const float = ref()
 const floatNum = ref('0')
 
-const minDistance = 2
+const minDistance = 5
 const tileTolerance = 5
 const floatOffset = 40
 let floatScale = 1
@@ -69,8 +69,6 @@ function mouseDown(ev: MouseEvent) {
 
   const target = ev.target as HTMLElement;
   startTile = [target.dataset.col!, target.dataset.row!]
-
-  console.log('startTile:', startTile)
 }
 
 function mouseMove(ev: MouseEvent) {
@@ -134,15 +132,87 @@ function getDirection(x: number, y: number) {
 
 function click(event: Event) {
   const target = event.target as HTMLElement;
-  target.classList.add('clicked')
+
+  if (target.classList.contains('clicked')) {
+    target.classList.remove('clicked')
+  } else if (target.classList.contains('cross')) {
+    target.classList.remove('cross')
+  } else {
+    target.classList.add('clicked')
+  }
+
+  detectChanges(target.dataset.col!, target.dataset.row!)
 }
 
 function leftClick(event: Event) {
   event.preventDefault();
-  const target = event.target as HTMLElement;
-  target.classList.add('cross')
+  const target = event.target as HTMLElement
+
+  if (target.classList.contains('clicked'))
+    target.classList.remove('clicked')
+
+  else if (target.classList.contains('cross'))
+    target.classList.remove('cross')
+  else
+    target.classList.add('cross')
+
 }
 
+function detectChanges(col: string, row: string) {
+  const allRow = document.querySelectorAll(`.clicked[data-row="${row}"]`)
+  const allCol = document.querySelectorAll(`.clicked[data-col="${col}"]`)
+
+  checkFulfilled(allRow, row, true)
+  checkFulfilled(allCol, col, false)
+}
+
+function checkFulfilled(query: NodeList, num: string, parseRow: boolean) {
+  const groups = []
+
+  for (const tile of query) {
+    const target = tile as HTMLElement;
+    const data = parseRow ? target.dataset.col! : target.dataset.row!
+    groups.push(Number.parseInt(data))
+  }
+
+  const dataSelection = parseRow ? `[data-row="${num}"]` : `[data-col="${num}"]`
+
+  document.querySelectorAll(dataSelection + `[data-index]`).forEach((el) => {
+    (el as HTMLElement).classList.remove('fulfilled')
+  })
+
+  const numNum = Number.parseInt(num)
+  const goalPos = parseRow ? props.file.rowGoalPositions[numNum] : props.file.columnGoalPositions[numNum]
+  console.log(goalPos)
+
+  //goes for each row's goal position
+  for (let i = 0; i < goalPos.length; i++) {
+    const pos = goalPos[i]
+    let fulfilled = true
+
+    //checks each position
+    for (let p = pos.start; p < pos.start + pos.length; p++) {
+      if (!groups.includes(p)) fulfilled = false
+    }
+
+    if (fulfilled) {
+      const selector = parseRow ? `[data-index="${props.file.rowLength - goalPos.length + i}"]` :
+          `[data-index="${props.file.columnLength - goalPos.length + i}"]`
+
+      const fullNum = document.querySelector(dataSelection + selector)
+      fullNum!.classList.add("fulfilled")
+    }
+  }
+
+  //fully fulfilled
+  if(document.querySelectorAll(`.fulfilled${dataSelection}[data-index]`).length == goalPos.length) {
+
+    //make all non-clicked tiles crossed out
+    document.querySelectorAll(`.tile${dataSelection}:not(.clicked)`).forEach((el) => {
+      (el as HTMLElement).classList.add('cross')
+    })
+  }
+}
 
 const tileSize = ref()
 
@@ -172,6 +242,9 @@ onMounted(async () => {
     if (!dragCancelled) {
       dragged.forEach((tile) => {
         tile.classList.add('clicked')
+
+        const target = tile as HTMLElement;
+        detectChanges(target.dataset.col!, target.dataset.row!)
       })
     }
 
@@ -195,6 +268,11 @@ onMounted(async () => {
       }
     }
   })
+
+  console.log(props.file.rowGoalPositions)
+  console.log(props.file.columnGoalPositions)
+
+  // displayGoal()
 })
 
 function displayGoal() {
@@ -204,10 +282,9 @@ function displayGoal() {
     for (let col = 0; col < goal[row].length; col++) {
       const select = document.querySelector(`[data-col="${col}"][data-row="${row}"]`)
 
-      if(goal[row][col] == '1') {
+      if (goal[row][col] == '1') {
         select?.classList.add('clicked')
-      }
-      else {
+      } else {
         select?.classList.add('cross')
       }
     }
@@ -226,10 +303,13 @@ function displayGoal() {
     <tr>
       <!--      empty spaces for spacing-->
       <th scope="col"></th>
-      <th class="columnHead" v-for="(col, index) in props.file.columns" scope="col" :data-col="index">
+      <th class="columnHead" v-for="(col, colIndex) in props.file.columns" scope="col" :data-col="colIndex">
 
         <div class="columnGrid">
-          <div v-for="num in col">
+          <div v-for="(num, index) in col"
+               :data-col="colIndex"
+               :data-index="index"
+               style="position: relative">
             {{ num }}
           </div>
         </div>
@@ -239,9 +319,11 @@ function displayGoal() {
 
     <tr class="row" v-for="(row, rowIndex) in props.file.rows">
       <th class="rowHead" scope="row" :data-row="rowIndex">
-        <div> </div>
 
-        <div v-for="num in row">
+        <div v-for="(num, index) in row"
+             :data-row="rowIndex"
+             :data-index="index"
+             style="position: relative">
           {{ num }}
         </div>
       </th>
@@ -435,7 +517,10 @@ th {
 
   width: 80%;
   height: 80%;
+}
 
+.fulfilled {
+  color: #4e4e4e;
 }
 </style>
 
