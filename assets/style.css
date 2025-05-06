@@ -1,0 +1,37 @@
+#table {
+    --border: solid #252e1f;
+    --bThick: 1px;
+
+    --thick: solid #2f3624;
+    --tThick: 3px;
+
+    --space: 0.25rem;
+    --counterColor: wheat;
+    --fulfilledColor: #4e4e4e;
+
+    --headBG: #0f1e0f;
+    --headText: #a9c3a8;
+
+    --tileColor: #0a130a;
+    --tileHover: #4c534c;
+    --tileHoverLight: #304330;
+
+    --dragFillColor: #175117;
+    --dragCrossColor: darkred;
+
+    --clickColor: wheat;
+
+    --selectedColor: #858508;
+    --selectedOutline: yellow;
+
+    --floatColor: #650040;
+}
+
+#container {
+    --buttonColor: #809da5;
+    --buttonHover: #c5d1e4;
+    --buttonActive: #abeeff;
+    --buttonShadow: darkslategray;
+
+    --guiColor: darkslategray;
+}

@@ -1,220 +1,26 @@
 <script setup lang="ts">
-import type NonFileReader from "~/components/NonFileReader";
 import type YAMLFileReader from "~/components/YAMLFileReader";
+import DesktopControls from "~/components/DesktopControls";
 
 const props = defineProps<{
   file: YAMLFileReader
 }>()
 
-let tiles: any
-let drag = false
-const float = ref()
-const floatNum = ref('0')
-
-const minDistance = 5
-const tileTolerance = 5
-const floatOffset = 40
-let floatScale = 1
-
-let tileMouseMove = false
-let dragCancelled = false
-
-function mouseOver(row: number, col: number) {
-  const rowTiles = document.querySelectorAll(`[data-row="${row}"]:not(.clicked)`)
-  const colTiles = document.querySelectorAll(`[data-col="${col}"]:not(.clicked)`)
-
-  for (const tile of tiles) {
-    tile.classList.remove('hover')
-  }
-
-  for (const row of rowTiles) {
-    row.classList.add("hover");
-  }
-
-  for (const col of colTiles) {
-    col.classList.add("hover");
-  }
-}
-
-function cancelDrag() {
-  dragCancelled = true
-
-  for (const tile of tiles) {
-    tile.classList.remove('hover')
-  }
-
-  if (drag) {
-    floatNum.value = "X"
-    floatScale = 1.3
-  }
-}
-
-function uncancelDrag() {
-  dragCancelled = false
-  floatScale = 1
-}
-
-let mouseStartPos: [number, number]
-let startTile: [string, string]
-
-enum Direction {
-  side = 0,
-  up
-}
-
-function mouseDown(ev: MouseEvent) {
-  drag = true
-  ev.preventDefault()
-  mouseStartPos = [ev.clientX, ev.clientY]
-
-  const target = ev.target as HTMLElement;
-  startTile = [target.dataset.col!, target.dataset.row!]
-}
-
-function mouseMove(ev: MouseEvent) {
-  tileMouseMove = true
-
-  if (drag) {
-    uncancelDrag()
-    const xDiff = ev.clientX - mouseStartPos[0]
-    const yDiff = ev.clientY - mouseStartPos[1]
-    const distance = Math.sqrt((xDiff ** 2) + (yDiff ** 2))
-    const direction = getDirection(xDiff, yDiff)
-    const target = ev.target as HTMLElement;
-
-    if (distance >= minDistance) {
-      handleDirection(target, direction)
-    }
-  }
-
-  setTimeout(() => (tileMouseMove = false), 1)
-
-}
-
-function handleDirection(target: HTMLElement, direction: Direction) {
-  const data = (direction == Direction.side) ? target.dataset.col! : target.dataset.row!
-  const tile = Number.parseInt(data)
-  const start = Number.parseInt(startTile[direction])
-
-  //min and max so the for loop can go in order
-  const min = Math.min(tile, start)
-  let max = Math.max(tile, start)
-
-  // console.log(min, max)
-  floatNum.value = String((max - min) + 1)
-
-  //removes all dragged elements for continuous generation
-  document.querySelectorAll(`.dragged`).forEach((el) => {
-    el.classList.remove('dragged')
-  })
-
-  let dragged: HTMLElement
-
-  for (let i = min; i <= max; i++) {
-    if (direction == Direction.side)
-      dragged = document.querySelector(`[data-col="${i}"][data-row="${startTile[1]}"]`)!
-    else
-      dragged = document.querySelector(`[data-col="${startTile[0]}"][data-row="${i}"]`)!
-
-    dragged?.classList.add('dragged')
-  }
-}
-
-function getDirection(x: number, y: number) {
-  x = Math.abs(x)
-  y = Math.abs(y)
-
-  if (x > y)
-    return Direction.side
-
-  return Direction.up
-}
-
-function click(event: Event) {
-  const target = event.target as HTMLElement;
-
-  if (target.classList.contains('clicked')) {
-    target.classList.remove('clicked')
-  } else if (target.classList.contains('cross')) {
-    target.classList.remove('cross')
-  } else {
-    target.classList.add('clicked')
-  }
-
-  detectChanges(target.dataset.col!, target.dataset.row!)
-}
-
-function leftClick(event: Event) {
-  event.preventDefault();
-  const target = event.target as HTMLElement
-
-  if (target.classList.contains('clicked'))
-    target.classList.remove('clicked')
-
-  else if (target.classList.contains('cross'))
-    target.classList.remove('cross')
-  else
-    target.classList.add('cross')
-
-}
-
-function detectChanges(col: string, row: string) {
-  const allRow = document.querySelectorAll(`.clicked[data-row="${row}"]`)
-  const allCol = document.querySelectorAll(`.clicked[data-col="${col}"]`)
-
-  checkFulfilled(allRow, row, true)
-  checkFulfilled(allCol, col, false)
-}
-
-function checkFulfilled(query: NodeList, num: string, parseRow: boolean) {
-  const groups = []
-
-  for (const tile of query) {
-    const target = tile as HTMLElement;
-    const data = parseRow ? target.dataset.col! : target.dataset.row!
-    groups.push(Number.parseInt(data))
-  }
-
-  const dataSelection = parseRow ? `[data-row="${num}"]` : `[data-col="${num}"]`
-
-  document.querySelectorAll(dataSelection + `[data-index]`).forEach((el) => {
-    (el as HTMLElement).classList.remove('fulfilled')
-  })
-
-  const numNum = Number.parseInt(num)
-  const goalPos = parseRow ? props.file.rowGoalPositions[numNum] : props.file.columnGoalPositions[numNum]
-  console.log(goalPos)
-
-  //goes for each row's goal position
-  for (let i = 0; i < goalPos.length; i++) {
-    const pos = goalPos[i]
-    let fulfilled = true
-
-    //checks each position
-    for (let p = pos.start; p < pos.start + pos.length; p++) {
-      if (!groups.includes(p)) fulfilled = false
-    }
-
-    if (fulfilled) {
-      const selector = parseRow ? `[data-index="${props.file.rowLength - goalPos.length + i}"]` :
-          `[data-index="${props.file.columnLength - goalPos.length + i}"]`
-
-      const fullNum = document.querySelector(dataSelection + selector)
-      fullNum!.classList.add("fulfilled")
-    }
-  }
-
-  //fully fulfilled
-  if(document.querySelectorAll(`.fulfilled${dataSelection}[data-index]`).length == goalPos.length) {
-
-    //make all non-clicked tiles crossed out
-    document.querySelectorAll(`.tile${dataSelection}:not(.clicked)`).forEach((el) => {
-      (el as HTMLElement).classList.add('cross')
-    })
-  }
-}
+let tiles: NodeListOf<Element>
+const tileTolerance = 1
 
 const tileSize = ref()
+const floatNum = ref('0')
+const float = ref()
+const table = ref()
+
+let controls: DesktopControls
+
+const emit = defineEmits({
+  ready: (controls: DesktopControls) => {
+    return controls
+  }
+})
 
 onMounted(async () => {
   // Wait for the next DOM update cycle
@@ -226,6 +32,7 @@ onMounted(async () => {
   const windowHeight = window.innerHeight
   const windowWidth = window.innerWidth
 
+  //calculates tileSize differently based on window aspect ratio
   if (windowWidth > windowHeight)
     tileSize.value = `${windowHeight / (height + tileTolerance)}px`
   else
@@ -233,63 +40,9 @@ onMounted(async () => {
 
   tiles = document.querySelectorAll('[data-row], [data-col]')
 
-  //handles float hiding and removing dragged tiles
-  document.addEventListener('mouseup', (ev: MouseEvent) => {
-    drag = false
-
-    const dragged = document.querySelectorAll(`.dragged`)
-
-    if (!dragCancelled) {
-      dragged.forEach((tile) => {
-        tile.classList.add('clicked')
-
-        const target = tile as HTMLElement;
-        detectChanges(target.dataset.col!, target.dataset.row!)
-      })
-    }
-
-    dragged.forEach((tile) => {
-      tile.classList.remove('dragged')
-    })
-
-    float.value.style.visibility = 'hidden'
-  })
-
-  document.addEventListener('mousemove', (ev: MouseEvent) => {
-    if (drag) {
-      float.value.style.visibility = 'visible'
-      float.value.style.transform = `scale(${floatScale})`
-
-      float.value.style.left = `${ev.clientX - floatOffset}px`
-      float.value.style.top = `${ev.clientY - floatOffset}px`
-
-      if (!tileMouseMove) {
-        cancelDrag()
-      }
-    }
-  })
-
-  console.log(props.file.rowGoalPositions)
-  console.log(props.file.columnGoalPositions)
-
-  // displayGoal()
+  controls = new DesktopControls(props.file, tiles, float, floatNum, table)
+  emit("ready", controls)
 })
-
-function displayGoal() {
-  const goal = props.file.goal
-
-  for (let row = 0; row < goal.length; row++) {
-    for (let col = 0; col < goal[row].length; col++) {
-      const select = document.querySelector(`[data-col="${col}"][data-row="${row}"]`)
-
-      if (goal[row][col] == '1') {
-        select?.classList.add('clicked')
-      } else {
-        select?.classList.add('cross')
-      }
-    }
-  }
-}
 
 </script>
 
@@ -299,7 +52,14 @@ function displayGoal() {
     <p>{{ floatNum }}</p>
   </div>
 
-  <table id="table" @mouseleave="cancelDrag">
+<!--  <div id="helper" ref="helper">-->
+<!--  </div>-->
+
+<!--  <div id="health">-->
+<!--    <div v-for="x in healthCount" class="heart"></div>-->
+<!--  </div>-->
+
+  <table id="table" ref="table">
     <tr>
       <!--      empty spaces for spacing-->
       <th scope="col"></th>
@@ -332,18 +92,14 @@ function displayGoal() {
       <td class="tile"
           v-for="(i, columnIndex) in props.file.columns"
           :data-row="rowIndex"
-          :data-col="columnIndex"
-          @mouseover="mouseOver(rowIndex, columnIndex)"
-          @mousedown="mouseDown($event)"
-          @mousemove="mouseMove($event)"
-          @click="click"
-          @contextmenu="leftClick"></td>
+          :data-col="columnIndex"></td>
     </tr>
 
   </table>
 </template>
 
 <style scoped>
+@import "~/assets/style.css";
 
 th, td, tr {
   padding: 0;
@@ -355,27 +111,15 @@ th, td, tr {
   border-collapse: collapse;
   font-family: "Kode Mono", monospace;
   counter-reset: row;
-
-  --border: solid #252e1f;
-  --bThick: 1px;
-
-  --thick: solid #2f3624;
-  --tThick: 3px;
-
-  --space: 0.25rem;
-  --counterColor: wheat;
-
-  --headBG: #0f1e0f;
-  --headText: #a9c3a8;
-
-  --tileColor: #0a130a;
-  --tileHover: #4c534c;
-  --tileHoverLight: #304330;
-
-  --dragColor: yellow;
-
-
   line-height: v-bind(tileSize);
+}
+
+#helper {
+  background: url("~/assets/messageBubble.svg") no-repeat center center;
+  background-size: cover;
+  position: absolute;
+  width: v-bind(tileSize);
+  height: v-bind(tileSize);
 }
 
 #float {
@@ -393,7 +137,7 @@ th, td, tr {
 
   box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.64);
 
-  background-color: #650040;
+  background-color: var(--floatColor);
   border-radius: 5px;
   z-index: 99;
 }
@@ -483,6 +227,7 @@ th {
   counter-increment: row 5;
 }
 
+/*counter numbers*/
 .row:nth-child(5n + 1):after {
   right: 0;
   content: counter(row);
@@ -498,17 +243,19 @@ th {
   background-color: var(--tileHoverLight);
 }
 
-.dragged {
-  //background-color: var(--dragColor);
-  background-color: yellow;
+.dragFill {
+  background-color: var(--dragFillColor);
+}
+
+.dragCross {
+  background-color: var(--dragCrossColor);
 }
 
 .clicked {
-  background-color: wheat;
+  background-color: var(--clickColor);
 }
 
-.cross:before {
-  content: url('/cross.svg');
+.cross:before, .wrong:before {
   position: absolute;
   top: 0;
   left: 0;
@@ -519,8 +266,27 @@ th {
   height: 80%;
 }
 
+.cross:before {
+  content: url('/cross.svg');
+}
+
+.wrong:before {
+  content: url('/wrong.svg');
+}
+
 .fulfilled {
-  color: #4e4e4e;
+  color: var(--fulfilledColor);
+}
+
+.selected {
+  outline: inset var(--selectedOutline) 5px;
+  outline-offset: -5px;
+  transition: opacity 0.2s;
+  z-index: 99;
+}
+
+.selectedTile {
+  background-color: var(--selectedColor);
 }
 </style>
 
