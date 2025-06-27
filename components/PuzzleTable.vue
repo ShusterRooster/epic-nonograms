@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type YAMLFileReader from "~/components/YAMLFileReader";
-import DesktopControls from "~/components/DesktopControls";
+import KeyboardControls from "~/components/controls/KeyboardControls";
 
 const props = defineProps<{
   file: YAMLFileReader
@@ -14,10 +14,10 @@ const floatNum = ref('0')
 const float = ref()
 const table = ref()
 
-let controls: DesktopControls
+let controls: KeyboardControls
 
 const emit = defineEmits({
-  ready: (controls: DesktopControls) => {
+  ready: (controls: KeyboardControls) => {
     return controls
   }
 })
@@ -40,7 +40,7 @@ onMounted(async () => {
 
   tiles = document.querySelectorAll('[data-row], [data-col]')
 
-  controls = new DesktopControls(props.file, tiles, float, floatNum, table)
+  controls = new KeyboardControls(props.file, tiles, float, floatNum, table)
   emit("ready", controls)
 })
 
@@ -52,56 +52,48 @@ onMounted(async () => {
     <p>{{ floatNum }}</p>
   </div>
 
-<!--  <div id="helper" ref="helper">-->
-<!--  </div>-->
+  <!--  <div id="helper" ref="helper">-->
+  <!--  </div>-->
 
-<!--  <div id="health">-->
-<!--    <div v-for="x in healthCount" class="heart"></div>-->
-<!--  </div>-->
+  <!--  <div id="health">-->
+  <!--    <div v-for="x in healthCount" class="heart"></div>-->
+  <!--  </div>-->
 
   <table id="table" ref="table">
-    <tr>
-      <!--      empty spaces for spacing-->
-      <th scope="col"></th>
-      <th class="columnHead" v-for="(col, colIndex) in props.file.columns" scope="col" :data-col="colIndex">
+  <tr>
+    <!--      empty spaces for spacing-->
+    <th scope="col"></th>
+    <th class="columnHead" v-for="(col, colIndex) in props.file.columns" scope="col" :data-col="colIndex">
 
-        <div class="columnGrid">
-          <div v-for="(num, index) in col"
-               :data-col="colIndex"
-               :data-index="index"
-               style="position: relative">
-            {{ num }}
-          </div>
-        </div>
-      </th>
-
-    </tr>
-
-    <tr class="row" v-for="(row, rowIndex) in props.file.rows">
-      <th class="rowHead" scope="row" :data-row="rowIndex">
-
-        <div v-for="(num, index) in row"
-             :data-row="rowIndex"
-             :data-index="index"
-             style="position: relative">
+      <div class="columnGrid">
+        <div v-for="(num, index) in col" :data-col="colIndex" :data-index="index" style="position: relative">
           {{ num }}
         </div>
-      </th>
+      </div>
+    </th>
+
+  </tr>
+
+  <tr class="row" v-for="(row, rowIndex) in props.file.rows">
+    <th class="rowHead" scope="row" :data-row="rowIndex">
+
+      <div v-for="(num, index) in row" :data-row="rowIndex" :data-index="index" style="position: relative">
+        {{ num }}
+      </div>
+    </th>
 
 
-      <td class="tile"
-          v-for="(i, columnIndex) in props.file.columns"
-          :data-row="rowIndex"
-          :data-col="columnIndex"></td>
-    </tr>
-
+    <td class="tile" v-for="(i, columnIndex) in props.file.columns" :data-row="rowIndex" :data-col="columnIndex"></td>
+  </tr>
   </table>
 </template>
 
 <style scoped>
 @import "~/assets/style.css";
 
-th, td, tr {
+th,
+td,
+tr {
   padding: 0;
 }
 
@@ -164,13 +156,13 @@ th {
   align-items: end;
   align-content: space-evenly;
 
-  border: var(--border);
-  border-width: 0 var(--bThick) 0 var(--bThick);
+  border: var(--border) solid;
+  border-width: 0 var(--borderThickness) 0 var(--borderThickness);
 }
 
 .columnGrid * {
-  border: var(--border);
-  border-width: var(--bThick) 0 0 0;
+  border: var(--border) solid;
+  border-width: var(--borderThickness) 0 0 0;
 }
 
 .rowHead {
@@ -185,22 +177,24 @@ th {
 }
 
 .rowHead * {
-  border: var(--border);
-  border-width: 0 0 0 var(--bThick);
+  border: var(--border) solid;
+  border-width: 0 0 0 var(--borderThickness);
   width: v-bind(tileSize);
 }
 
-.rowHead, .columnHead {
+.rowHead,
+.columnHead {
   background-color: var(--headBG);
   user-select: none;
 }
 
 .row {
-  border: var(--border);
-  border-width: var(--bThick) 0 var(--bThick) 0;
+  border: var(--border) solid;
+  border-width: var(--borderThickness) 0 var(--borderThickness) 0;
 }
 
-.row:first-child, .row:last-child {
+.row:first-child,
+.row:last-child {
   border-width: 0;
 }
 
@@ -210,20 +204,21 @@ th {
   height: v-bind(tileSize);
 
   background-color: var(--tileColor);
-  border: var(--border);
-  border-width: var(--bThick);
+  border: var(--border) solid;
+  border-width: var(--borderThickness);
 }
 
 /*vertical*/
-.row td:nth-child(5n + 1), .columnHead:nth-child(5n + 1) {
-  border: var(--thick);
-  border-width: 0 var(--tThick) 0 0;
+.row td:nth-child(5n + 1),
+.columnHead:nth-child(5n + 1) {
+  border: var(--markerColor) solid;
+  border-width: 0 var(--markerThickness) 0 0;
 }
 
 /*horizontal*/
 .row:nth-child(5n + 1) {
-  border: var(--thick);
-  border-width: 0 0 var(--tThick) 0;
+  border: var(--markerColor) solid;
+  border-width: 0 0 var(--markerThickness) 0;
   counter-increment: row 5;
 }
 
@@ -231,8 +226,19 @@ th {
 .row:nth-child(5n + 1):after {
   right: 0;
   content: counter(row);
-  color: var(--counterColor);
-  margin-left: var(--space);
+  color: var(--markerNumberColor);
+  margin-left: var(--markerNumberMargin);
+}
+
+.selected {
+  outline: inset var(--selectorOutline) 5px;
+  outline-offset: -5px;
+  transition: opacity 0.2s;
+  z-index: 99;
+}
+
+.selectedTile {
+  background-color: var(--selectorColor);
 }
 
 .tile:not(.clicked, .dragged):hover {
@@ -252,10 +258,11 @@ th {
 }
 
 .clicked {
-  background-color: var(--clickColor);
+  background-color: var(--tileFillColor);
 }
 
-.cross:before, .wrong:before {
+.cross:before,
+.wrong:before {
   position: absolute;
   top: 0;
   left: 0;
@@ -278,20 +285,5 @@ th {
   color: var(--fulfilledColor);
 }
 
-.selected {
-  outline: inset var(--selectedOutline) 5px;
-  outline-offset: -5px;
-  transition: opacity 0.2s;
-  z-index: 99;
-}
 
-.selectedTile {
-  background-color: var(--selectedColor);
-}
-</style>
-
-<style>
-body {
-  background-color: #030c03;
-}
 </style>

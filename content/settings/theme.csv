@@ -1,0 +1,21 @@
+var,value,name,desc
+--border,#252e1f,Border color,Color of the tile borders
+--markerColor,#2f3624,Marker line color,Color of the marker line (the one that appears every 5 tiles)
+--markerNumberColor,wheat,Marker number color,Color of the marker numbers
+--fulfilledColor,#4e4e4e,Fulfilled number color,Color of the number that indicates when a hint number has been filled
+--headBG,#0f1e0f,Head tile background color,Color of the background of the head of the rows and columns
+--headText,#a9c3a8,Head tile number color,Color of the numbers within the head of the rows and columns
+--tileColor,#0a130a,Tile color,Inner color of the tiles
+--tileHover,#4c534c,Tile hover color,The color of the tiles upon hovering with a selector
+--tileHoverLight,#304330,Tile hover highlight color,The color of the tiles in the same row and column as the tile that is being hovered
+--dragFillColor,#175117,Drag fill color,The color of the tiles when dragged in FILL mode
+--dragCrossColor,darkred,Drag cross color,The color of the tiles when dragged in CROSS mode
+--tileFillColor,wheat,Tile filled color,The filled color of the tiles
+--selectorColor,#858508,Selector highlight color,The color of the tiles in the same row and column as the selector
+--selectorOutline,yellow,Selector outline color,The outline color of the selector
+--floatColor,#650040,Float background color,The background color of the floating number counter
+--buttonColor,#809da5,Standard button color,The color of a button when not activated
+--buttonActive,#abeeff,Active button color,The color of a button when active
+--buttonHover,#c5d1e4,Hover button color,The color of a button when hovered with mouse
+--buttonShadow,darkslategray,Button shadow color,The color of the shadow of the button
+--guiColor,darkslategray,User interface color,The background color of the user interface

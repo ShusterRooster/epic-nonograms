@@ -1,0 +1,122 @@
+"theme": [
+  {
+    "var": "--border",
+    "value": "#252e1f",
+    "name": "Border color",
+    "desc": "Color of the tile borders"
+  },
+  {
+    "var": "--markerColor",
+    "value": "#2f3624",
+    "name": "Marker line color",
+    "desc": "Color of the marker line (the one that appears every 5 tiles)"
+  },
+  {
+    "var": "--markerNumberColor",
+    "value": "wheat",
+    "name": "Marker number color",
+    "desc": "Color of the marker numbers"
+  },
+  {
+    "var": "--fulfilledColor",
+    "value": "#4e4e4e",
+    "name": "Fulfilled number color",
+    "desc": "Color of the number that indicates when a hint number has been filled"
+  },
+  {
+    "var": "--headBG",
+    "value": "#0f1e0f",
+    "name": "Head tile background color",
+    "desc": "Color of the background of the head of the rows and columns"
+  },
+  {
+    "var": "--headText",
+    "value": "#a9c3a8",
+    "name": "Head tile number color",
+    "desc": "Color of the numbers within the head of the rows and columns"
+  },
+  {
+    "var": "--tileColor",
+    "value": "#0a130a",
+    "name": "Tile color",
+    "desc": "Inner color of the tiles"
+  },
+  {
+    "var": "--tileHover",
+    "value": "#4c534c",
+    "name": "Tile hover color",
+    "desc": "The color of the tiles upon hovering with a selector"
+  },
+  {
+    "var": "--tileHoverLight",
+    "value": "#304330",
+    "name": "Tile hover highlight color",
+    "desc": "The color of the tiles in the same row and column as the tile that is being hovered"
+  },
+  {
+    "var": "--dragFillColor",
+    "value": "#175117",
+    "name": "Drag fill color",
+    "desc": "The color of the tiles when dragged in FILL mode"
+  },
+  {
+    "var": "--dragCrossColor",
+    "value": "darkred",
+    "name": "Drag cross color",
+    "desc": "The color of the tiles when dragged in CROSS mode"
+  },
+  {
+    "var": "--tileFillColor",
+    "value": "wheat",
+    "name": "Tile filled color",
+    "desc": "The filled color of the tiles"
+  },
+  {
+    "var": "--selectorColor",
+    "value": "#858508",
+    "name": "Selector highlight color",
+    "desc": "The color of the tiles in the same row and column as the selector"
+  },
+  {
+    "var": "--selectorOutline",
+    "value": "yellow",
+    "name": "Selector outline color",
+    "desc": "The outline color of the selector"
+  },
+  {
+    "var": "--floatColor",
+    "value": "#650040",
+    "name": "Float background color",
+    "desc": "The background color of the floating number counter"
+  },
+  {
+    "var": "--buttonColor",
+    "value": "#809da5",
+    "name": "Standard button color",
+    "desc": "The color of a button when not activated"
+  },
+  {
+    "var": "--buttonActive",
+    "value": "#abeeff",
+    "name": "Active button color",
+    "desc": "The color of a button when active"
+  },
+  {
+    "var": "--buttonHover",
+    "value": "#c5d1e4",
+    "name": "Hover button color",
+    "desc": "The color of a button when hovered with mouse"
+  },
+  {
+    "var": "--buttonShadow",
+    "value": "darkslategray",
+    "name": "Button shadow color",
+    "desc": "The color of the shadow of the button"
+  },
+  {
+    "var": "--guiColor",
+    "value": "darkslategray",
+    "name": "User interface color",
+    "desc": "The background color of the user interface"
+  }
+]

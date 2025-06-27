@@ -1,14 +1,9 @@
-#table {
-    --border: solid #252e1f;
-    --bThick: 1px;
+:root {
+    --border: #252e1f;
+    --markerColor: solid #2f3624;
+    --markerNumberColor: wheat;
 
-    --thick: solid #2f3624;
-    --tThick: 3px;
-
-    --space: 0.25rem;
-    --counterColor: wheat;
     --fulfilledColor: #4e4e4e;
-
     --headBG: #0f1e0f;
     --headText: #a9c3a8;
 
@@ -19,19 +14,28 @@
     --dragFillColor: #175117;
     --dragCrossColor: darkred;
 
-    --clickColor: wheat;
+    --tileFillColor: wheat;
 
-    --selectedColor: #858508;
-    --selectedOutline: yellow;
+    --selectorColor: #858508;
+    --selectorOutline: yellow;
 
     --floatColor: #650040;
-}
 
-#container {
+    /* gui */
     --buttonColor: #809da5;
     --buttonHover: #c5d1e4;
     --buttonActive: #abeeff;
     --buttonShadow: darkslategray;
 
     --guiColor: darkslategray;
+    --backgroundColor: #030c03;
+}
+
+:root {
+    font-family: monospace;
+    color: wheat;
+    --markerThickness: 3px;
+    --borderThickness: 1px;
+    --markerNumberMargin: 0.25rem;
+    background-color: var(--backgroundColor);
 }

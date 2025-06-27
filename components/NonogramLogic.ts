@@ -1,6 +1,6 @@
 import type YAMLFileReader from "~/components/YAMLFileReader";
 
-enum Direction {
+export enum Direction {
     side = 0,
     up
 }
@@ -26,6 +26,7 @@ export default abstract class NonogramLogic {
 
     float: Ref
     floatNum: Ref
+    buttonAction = 'fill'
 
     protected constructor(file: YAMLFileReader, tiles: NodeListOf<Element>, float: Ref, floatNum: Ref) {
         this.file = file
@@ -137,18 +138,47 @@ export default abstract class NonogramLogic {
     }
 
     /**
-     * gets direction based off magnitude of the stronger direction.
-     * @param x
-     * @param y
+     * Handles tile clicking. Will return the state of the affected tile if it is not locked.
+     * If affected tile is locked or just undoing a cross, it will return undefined.
+     * @param target
      */
-    getDirection(x: number, y: number) {
-        x = Math.abs(x)
-        y = Math.abs(y)
+    updateTile(target: HTMLElement): boolean | undefined {
+        if (target.classList.contains('locked')) return;
 
-        if (x > y)
-            return Direction.side
+        const col = Number.parseInt(target.dataset.col!)
+        const row = Number.parseInt(target.dataset.row!)
+        const goalfilled = this.isGoalFilled(col, row)
 
-        return Direction.up
+        //removes cross class if it exists and exits
+        if(target.classList.contains('cross')) {
+            target.classList.remove('cross')
+            return
+        }
+
+        if(this.buttonAction == 'fill') {
+            //fill on a filled tile = CORRECT, add click
+            //fill on an empty tile = WRONG, handle mistake and add wrong
+            //do not handle crosses
+            if (goalfilled) {
+                target.classList.add('clicked')
+                this.detectChanges(col, row)
+            } else
+                this.handleMistake(target)
+        }
+        else if(this.buttonAction == 'cross') {
+            target.classList.add('cross')
+        }
+
+        return goalfilled
+    }
+
+    getTile(col: number, row: number) {
+        return document.querySelector(`[data-col="${col}"][data-row="${row}"]`) as HTMLElement
+    }
+
+    setStartTile(target: EventTarget) {
+        const elt = target as HTMLElement
+        this.startTile = [Number.parseInt(elt.dataset.col!), Number.parseInt(elt.dataset.row!)]
     }
 
     /**
@@ -174,6 +204,7 @@ export default abstract class NonogramLogic {
         })
 
         let dragged: HTMLElement
+        const mode = this.buttonAction == 'fill' ? 'dragFill' : 'dragCross'
 
         for (let i = min; i <= max; i++) {
             if (direction == Direction.side)
@@ -181,75 +212,16 @@ export default abstract class NonogramLogic {
             else
                 dragged = this.getTile(this.startTile[0], i)
 
-            dragged?.classList.add('dragged')
+            dragged?.classList.add(mode)
         }
     }
 
-    /**
-     * cancels an ongoing drag operation
-     */
-    cancelDrag() {
-        console.log("cancel drag")
+    showFloat(x: number, y: number) {
+        this.float.value.style.visibility = 'visible'
+        this.float.value.style.transform = `scale(${this.floatScale})`
 
-        this.dragCancelled = true
-
-        for (const tile of this.tiles) {
-            tile.classList.remove('hover')
-        }
-
-        if (this.drag) {
-            this.floatNum.value = "X"
-            this.floatScale = 1.3
-        }
-    }
-
-    /**
-     * Handles return to normal after a drag operation is cancelled
-     */
-    uncancelDrag() {
-        this.dragCancelled = false
-        this.floatScale = 1
-    }
-
-    /**
-     * Handles tile clicking. Will return the state of the affected tile if it is not locked.
-     * If affected tile is locked or just undoing a cross, it will return undefined.
-     * @param target
-     * @param action
-     */
-    updateTile(target: HTMLElement, action: string): boolean | undefined {
-        if (target.classList.contains('locked')) return;
-
-        const col = Number.parseInt(target.dataset.col!)
-        const row = Number.parseInt(target.dataset.row!)
-        const goalfilled = this.isGoalFilled(col, row)
-
-        //removes cross class if it exists and exits
-        if(target.classList.contains('cross')) {
-            target.classList.remove('cross')
-            return
-        }
-
-        if(action == 'fill') {
-            //fill on a filled tile = CORRECT, add click
-            //fill on an empty tile = WRONG, handle mistake and add wrong
-            //do not handle crosses
-            if (goalfilled) {
-                target.classList.add('clicked')
-                this.detectChanges(col, row)
-            } else
-                this.handleMistake(target)
-        }
-        else if(action == 'cross') {
-            target.classList.add('cross')
-        }
-
-
-        return goalfilled
-    }
-
-    getTile(col: number, row: number) {
-        return document.querySelector(`[data-col="${col}"][data-row="${row}"]`) as HTMLElement
+        this.float.value.style.left = `${x - this.floatOffset}px`
+        this.float.value.style.top = `${y - this.floatOffset}px`
     }
 
     displayGoal() {

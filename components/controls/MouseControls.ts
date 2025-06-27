@@ -1,11 +1,7 @@
+import NonogramLogic, {Direction} from "~/components/NonogramLogic";
 import type YAMLFileReader from "~/components/YAMLFileReader";
-import SelectorLogic from "~/components/SelectorLogic";
 
-export default class DesktopControls extends SelectorLogic {
-    crossButton?: HTMLInputElement
-    fillButton?: HTMLInputElement
-    buttonAction = 'fill'
-
+export default class MouseControls extends NonogramLogic {
     constructor(file: YAMLFileReader, tiles: NodeListOf<Element>, float: Ref, floatNum: Ref, table: Ref) {
         super(file, tiles, float, floatNum);
 
@@ -17,46 +13,11 @@ export default class DesktopControls extends SelectorLogic {
             target.onmousemove = (e) => this.mouseMove(e)
             target.onclick = (e) => this.click(e)
             target.oncontextmenu = (e) => this.leftClick(e)
-        }
 
-        document.onmousemove = (e) => this.documentMouseMove(e)
-        document.onmouseup = () => this.documentMouseUp()
-        table.value.onmouseleave = () => this.cancelDrag()
+            document.onmousemove = (e) => this.documentMouseMove(e)
+            document.onmouseup = () => this.documentMouseUp()
 
-        //set up keyboard events
-        document.onkeydown = (e: KeyboardEvent) => {
-            switch (e.key) {
-                case "ArrowLeft":
-                    e.preventDefault()
-                    this.directionInput('left')
-                    break;
-
-                case "ArrowRight":
-                    e.preventDefault()
-                    this.directionInput('right')
-                    break;
-
-                case "ArrowUp":
-                    e.preventDefault()
-                    this.directionInput('up')
-                    break;
-
-                case "ArrowDown":
-                    e.preventDefault()
-                    this.directionInput('down')
-                    break;
-
-                case "z":
-                    if(this.fillButton) this.fillButton.checked = true
-                    this.selectorAction('fill')
-                    break;
-
-                case "x":
-                    if(this.crossButton) this.crossButton.checked = true
-                    this.selectorAction('cross')
-                    break;
-
-            }
+            table.value.mouseleave = () => this.cancelDrag()
         }
     }
 
@@ -65,17 +26,16 @@ export default class DesktopControls extends SelectorLogic {
      * @param ev
      */
     mouseOver(ev: MouseEvent) {
-        //remove old hover
-        for (const tile of this.tiles) {
-            tile.classList.remove('hover')
-        }
-
         const target = ev.target as HTMLElement
         const row = target.dataset.row!
         const col = target.dataset.col!
 
         const rowTiles = document.querySelectorAll(`[data-row="${row}"]:not(.clicked)`)
         const colTiles = document.querySelectorAll(`[data-col="${col}"]:not(.clicked)`)
+
+        for (const tile of this.tiles) {
+            tile.classList.remove('hover')
+        }
 
         for (const row of rowTiles) {
             row.classList.add("hover");
@@ -95,8 +55,7 @@ export default class DesktopControls extends SelectorLogic {
         ev.preventDefault()
         this.mouseStartPos = [ev.clientX, ev.clientY]
 
-        const target = ev.target as HTMLElement;
-        this.startTile = [Number.parseInt(target.dataset.col!), Number.parseInt(target.dataset.row!)]
+        this.setStartTile(ev.target!)
     }
 
     /**
@@ -127,7 +86,6 @@ export default class DesktopControls extends SelectorLogic {
      */
     click(event: Event) {
         this.updateTile(event.target as HTMLElement)
-
     }
 
     /**
@@ -136,12 +94,10 @@ export default class DesktopControls extends SelectorLogic {
      */
     leftClick(event: Event) {
         event.preventDefault();
-        this.crossTile(event.target as HTMLElement)
-    }
+        const target = event.target as HTMLElement
+        if (target.classList.contains('locked')) return
 
-    crossTile(tile: HTMLElement) {
-        if (tile.classList.contains('locked')) return
-        tile.classList.add('cross')
+        target.classList.add('cross')
     }
 
     /**
@@ -174,11 +130,7 @@ export default class DesktopControls extends SelectorLogic {
      */
     documentMouseMove(ev: MouseEvent) {
         if (this.drag) {
-            this.float.value.style.visibility = 'visible'
-            this.float.value.style.transform = `scale(${this.floatScale})`
-
-            this.float.value.style.left = `${ev.clientX - this.floatOffset}px`
-            this.float.value.style.top = `${ev.clientY - this.floatOffset}px`
+            this.showFloat(ev.clientX, ev.clientY)
 
             if (!this.tileMouseMove) {
                 this.cancelDrag()
@@ -186,17 +138,45 @@ export default class DesktopControls extends SelectorLogic {
         }
     }
 
-    selectorAction(action: string) {
-        if(!this.previousSelector) return
+    /**
+     * gets direction based off magnitude of the stronger direction.
+     * @param x
+     * @param y
+     */
+    getDirection(x: number, y: number) {
+        x = Math.abs(x)
+        y = Math.abs(y)
 
-        switch (action) {
-            case "cross":
-                this.crossTile(this.previousSelector)
-                break;
+        if (x > y)
+            return Direction.side
 
-            case "fill":
-                this.updateTile(this.previousSelector)
+        return Direction.up
+    }
+
+    /**
+     * cancels an ongoing drag operation
+     */
+    cancelDrag() {
+        console.log("cancel drag")
+
+        this.dragCancelled = true
+
+        for (const tile of this.tiles) {
+            tile.classList.remove('hover')
         }
+
+        if (this.drag) {
+            this.floatNum.value = "X"
+            this.floatScale = 1.3
+        }
+    }
+
+    /**
+     * Handles return to normal after a drag operation is cancelled
+     */
+    uncancelDrag() {
+        this.dragCancelled = false
+        this.floatScale = 1
     }
 }
 

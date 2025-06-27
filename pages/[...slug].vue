@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import YAMLFileReader from "~/components/YAMLFileReader";
-import DPad from "~/components/DPad.vue";
-import type DesktopControls from "~/components/DesktopControls";
+import DPad from "~/components/controls/DPad.vue";
+import type KeyboardControls from "~/components/controls/KeyboardControls";
 
 const route = useRoute()
 const {data: page} = useAsyncData(route.path, () =>
@@ -16,9 +16,9 @@ onMounted(async () => {
 })
 
 const controls = ref()
-let game: DesktopControls
+let game: KeyboardControls
 
-function initGame(logic: DesktopControls) {
+async function initGame(logic: KeyboardControls) {
   controls.value = logic
   logic.crossButton = cross.value
   logic.fillButton = fill.value
@@ -48,7 +48,7 @@ function buttonClick(action: string) {
         <input ref="cross" id="cross" class="button" type="radio" name="button" @click="buttonClick('cross')">
       </div>
 
-      <DPad :controls="controls" style="grid-area: dpad"></DPad>
+<!--      <DPad :controls="controls" style="grid-area: dpad"></DPad>-->
 
     </div>
 
@@ -56,8 +56,6 @@ function buttonClick(action: string) {
 </template>
 
 <style scoped>
-@import "~/assets/style.css";
-
 .button {
   width: 100%;
   height: 100%;

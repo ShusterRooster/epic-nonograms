@@ -68,6 +68,9 @@ export default class SelectorLogic extends NonogramLogic {
         this.previousSelector.classList.add('selected')
     }
 
+    /**
+     * Ensures selector cannot move beyond bounds
+     */
     limitSelectorPosition() {
         const columns = this.file.columns.length - 1
         const rows = this.file.rows.length - 1
@@ -81,11 +84,15 @@ export default class SelectorLogic extends NonogramLogic {
             this.selectorPosition[1] = rows
         else if(this.selectorPosition[1] > rows)
             this.selectorPosition[1] = 0
+    }
 
+    getSelectorTile() {
+       return this.getTile(this.selectorPosition[0], this.selectorPosition[1])
     }
 
     getSelectorTiles() {
         //all in the matching row and col
-        return document.querySelectorAll(`[data-col="${this.selectorPosition[0]}"]:not(.clicked), [data-row="${this.selectorPosition[1]}"]:not(.clicked)`)
+        return document.querySelectorAll(`[data-col="${this.selectorPosition[0]}"]:not(.clicked, .dragCross, .dragFill), 
+        [data-row="${this.selectorPosition[1]}"]:not(.clicked, .dragCross, .dragFill)`)
     }
 }

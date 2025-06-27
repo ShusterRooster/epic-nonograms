@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type DesktopControls from "~/components/DesktopControls";
+import type KeyboardControls from "~/components/controls/KeyboardControls";
 
 const props = defineProps<{
-  controls: DesktopControls
+  controls: KeyboardControls
 }>()
 
 function click(direction: string) {

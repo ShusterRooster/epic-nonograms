@@ -2,11 +2,14 @@ import {defineCollection, defineContentConfig, z} from '@nuxt/content'
 
 export default defineContentConfig({
     collections: {
-        puzzles: defineCollection({
-            source: '**',
+        theme: defineCollection({
             type: 'data',
+            source: 'settings/**.csv',
             schema: z.object({
-                rawbody: z.string()
+                var: z.string(),
+                value: z.string(),
+                name: z.string(),
+                desc: z.string(),
             })
         }),
 

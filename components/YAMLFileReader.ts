@@ -33,15 +33,11 @@ export default class YAMLFileReader {
 
         this.rowGoalPositions = this.makeGoalGroupings(this.goal)
 
-        console.log(this.goal)
-
-
         const columns: string[] = []
         for (let i = 0; i < this.width; i++) {
             columns.push(YAMLFileReader.getColumn(this.goal, i).join(''))
         }
 
-        console.log(columns)
         this.columnGoalPositions = this.makeGoalGroupings(columns)
 
         this.rowLength = this.rows[0].length
